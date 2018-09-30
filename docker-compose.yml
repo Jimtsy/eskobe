@@ -1,0 +1,19 @@
+version: '2'
+services:
+  eskobe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: registry.wosai-inc.com/easysie:latest
+    restart: on-failure:1
+    container_name: eskobe
+    network_mode: bridge
+    environment:
+    - LOG_DIR=/eskobe/logs
+    - LEVEL=10
+    ports:
+      - "18000:18000"
+    volumes:
+      - $PWD:/eskobe
+      - /app/log/eskobe:/eskobe/logs/
+    command: python manage.py runserver 0.0.0.0:18000

@@ -1,0 +1,6 @@
+django
+simplejson
+django-cors-headers
+requests
+influxdb
+python-json-logger
