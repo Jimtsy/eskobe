@@ -1,44 +1,14 @@
 # -*- coding: utf-8 -*-
+
 import requests
 import threading
 import time
 import random
-import ctypes
-import inspect
 from utils import function_runtime, make_sequence_key
 from push.lib.stats import StatsHook
 from push.lib.influxdb import InfluxDBHelper, Influx_hook
-from push.lib.model import new_model
-from log import logger
-
-
-class Body:
-    """PushCenter 推送实体"""
-    def __init__(self, app_id, app_key, temple_id, amount: int, target_id, platform="IOT", priority: int=1):
-        self.app_id = app_id
-        self.app_key = app_key
-        self.temple_id = temple_id
-        self.amount = amount
-        self.target_id = target_id
-        self.platform = platform
-        self.priority = priority
-
-    @property
-    def decorated(self):
-        return [
-            self.app_id,
-            self.app_key,
-            self.temple_id,
-            dict(amount=self.amount),
-            [self.target_id],
-            self.platform,
-            self.priority,
-        ]
-
-    def __str__(self):
-        return str(self.decorated)
-
-    __repr__ = __str__
+from push.lib.parser import new_response_parser
+from const import APPPush
 
 
 class PCPool(type):
@@ -59,14 +29,15 @@ class PCPool(type):
 
 
 class PushCenter(metaclass=PCPool):
-    def __init__(self, platform):
-        self.push_address = "http://pushservice-core.test.shouqianba.com/rpc/push"
+    def __init__(self, platform, handler_new_response_parser, push_address, *args, **kwargs):
+        self.push_address = push_address
         self.session = requests.session()
         self.stats_hook = None
         self.influx_bd_hook = None
         self.platform = platform
         self.hooks = {}
         self.stop_push = False
+        self.handler_new_response_parser = handler_new_response_parser
 
     def add_handle_function_stats(self, sh: StatsHook):
         if "stats" in self.hooks:
@@ -85,7 +56,7 @@ class PushCenter(metaclass=PCPool):
 
     def _push(self, method, url, target_id, latency, jitter, **kwargs):
         response, response_time = self.__push(method, url, **kwargs)
-        model = new_model(self.platform, response_time, response.text, target_id)
+        model = self.handler_new_response_parser(self.platform, response_time, response.text, target_id)
 
         if self.hooks:
             [hook.receive(model) for _, hook in self.hooks.items() if hook.is_alive()]
@@ -122,10 +93,10 @@ class PushCenter(metaclass=PCPool):
                 break
             self._push(method, url, target_id, **kwargs)
 
-    def __make_json_rpc_payload(self, api, body: Body):
+    def __make_json_rpc_payload(self, api, body):
         return dict(method=api, jsonrpc="2.0", id="0", params=body.decorated)
 
-    def _json_rpc_push(self, api, body: Body, push_count, **kwargs):
+    def _json_rpc_push(self, api, body, push_count, **kwargs):
 
         payload = self.__make_json_rpc_payload(api, body)
 
@@ -147,7 +118,7 @@ class PushCenter(metaclass=PCPool):
             thread.setDaemon(False)
             thread.start()
 
-    def start_push(self, push_type, api, body: Body, **kwargs):
+    def start_push(self, push_type, api, body, **kwargs):
 
         jitter = kwargs.get("jitter", 0)
         latency = kwargs.get("latency", 1000)
@@ -162,7 +133,8 @@ class PushCenter(metaclass=PCPool):
             [hook.start() for _, hook in self.hooks.items() if not hook.is_alive()]
 
         if push_type == "1":
-            self._json_rpc_push(api=api, body=body, push_count=push_count, concurrency=concurrency, latency=latency, jitter=jitter)
+            self._json_rpc_push(api=api, body=body, push_count=push_count,
+                                concurrency=concurrency, latency=latency, jitter=jitter)
 
     def stop_all_thread(self):
         if self.stop_push:
@@ -177,13 +149,13 @@ class PushCenter(metaclass=PCPool):
         return None
 
 
-if __name__ == "__main__":
-    b = Body(app_id="d2c8f66a91a8b35026efc0e1d88faeca",
-             app_key="0cbf80acfb836b31ae7afddf6f1e9425",
-             temple_id="5b14eded5c40450001b056e2",
-             target_id="070c4897-f457-43f1-bafc-1541bce94ab61",
-             amount=1)
+class MOTTPushCenter(PushCenter):
+    """云喇叭推送中心"""
+    def __init__(self, handler_new_response_parser, push_address):
+        super().__init__(APPPush.PushCenter.IOT, handler_new_response_parser, push_address)
 
-    pc = PushCenter(platform="mott")
-    pc.start_push("1","pushTemplateMessage", b, push_count=0, concurrency=1)
-    pc.stop_all_thread()
+
+def new_push_center(platform):
+    if platform == APPPush.PushCenter.IOT:
+        return MOTTPushCenter(new_response_parser, "http://pushservice-core.test.shouqianba.com/rpc/push")
+    return None

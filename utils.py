@@ -181,5 +181,5 @@ def function_runtime(func):
     def wrap(*args, **kwargs):
         start = timeit.default_timer()
         ret = func(*args, **kwargs)
-        return ret, (timeit.default_timer() - start) * 1000
+        return ret, int((timeit.default_timer() - start) * 1000)
     return wrap

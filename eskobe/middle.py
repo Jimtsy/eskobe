@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from utils import camel_case_to_lower_case
-from response import NotFoundResponse, ServerErrorResponse
+from response import NotFound, ServerErr
 from log import logger
 
 
@@ -25,10 +25,10 @@ def request_middleware(request,  **kwargs):
         if obj_func:
             return obj_func(request)
         else:
-            return NotFoundResponse()
+            return NotFound()
 
     except ImportError as e:
-        return ServerErrorResponse('Import error, Exception:{}'.format(e))
+        return ServerErr('Import error, Exception:{}'.format(e))
 
     except Exception as e:
-        return ServerErrorResponse(e)
+        return ServerErr(e)

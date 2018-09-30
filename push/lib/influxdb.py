@@ -32,7 +32,7 @@ class InfluxDBHelper(threading.Thread):
                 measurement=measurement,
                 target=model.target,
                 platform=model.platform,
-                response_time=int(model.response_time)
+                response_time=model.response_time
             )
             resp = self.session.post(self.url, data=point)
             if resp.text != "":

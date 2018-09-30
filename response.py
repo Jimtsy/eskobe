@@ -18,29 +18,36 @@ class BaseJSONNotifyResponse(JsonResponse):
         super().__init__(data=data, safe=safe, **kwargs)
 
 
-class ParamsErrorResponse(BaseJSONNotifyResponse):
+class ParamsErr(BaseJSONNotifyResponse):
     def __init__(self, detail=None):
         _data = new_response_data("parameters error", detail)
         logger.error(_data)
         super().__init__(_data, status=HTTPStatusCode.CLIENT_ERROR)
 
 
-class SuccessResponse(BaseJSONNotifyResponse):
+class Success(BaseJSONNotifyResponse):
     def __init__(self, detail=None):
         _data = new_response_data("success", detail)
         logger.info(_data)
         super().__init__(_data, status=HTTPStatusCode.SUCCESS)
 
 
-class ServerErrorResponse(BaseJSONNotifyResponse):
+class ServerErr(BaseJSONNotifyResponse):
     def __init__(self, detail=None):
         _data = new_response_data("interval server 500", detail)
         logger.error(detail)
         super().__init__(_data, status=HTTPStatusCode.SERVICE_ERROR)
 
 
-class NotFoundResponse(BaseJSONNotifyResponse):
+class NotFound(BaseJSONNotifyResponse):
     def __init__(self, detail=None):
         _data = new_response_data("404 not found", detail)
         logger.error(detail)
         super().__init__(_data, status=HTTPStatusCode.NOT_FOUND)
+
+
+class BizErr(BaseJSONNotifyResponse):
+    def __init__(self, detail=None):
+        _data = new_response_data("405 biz error", detail)
+        logger.error(detail)
+        super().__init__(_data, status=HTTPStatusCode.BIZ_ERROR)

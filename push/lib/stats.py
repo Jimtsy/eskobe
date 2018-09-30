@@ -55,6 +55,8 @@ class StatsHook(threading.Thread):
                 if not self.__is_print.is_set():
                     self.resume()
                 self.requests += 1
+
+                print("stats:", rp.response_time, type(rp.response_time))
                 self.total_response_time += rp.response_time
                 self.update_min(rp.response_time)
                 self.update_max(rp.response_time)
