@@ -26,7 +26,6 @@ class PPPool(type):
 
 
 class PushPlatform(metaclass=PPPool):
-    # todo: 推送平台是单实例，但是根据推送的目标不通，可以生成多个目标统计，与目标influxdb。
     def __init__(self, platform, response_parser_callback, push_address, *args, **kwargs):
         self.push_address = push_address
         self.session = requests.session()
