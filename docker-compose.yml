@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: registry.wosai-inc.com/easysie:latest
+    image: registry.eskobe-inc.com/eskobe:latest
     restart: on-failure:1
     container_name: eskobe
     network_mode: bridge
