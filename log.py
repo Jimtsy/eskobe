@@ -25,7 +25,7 @@ LOGGING_LEVEL = _level
 def log_enable():
     try:
         bak_time = datetime.now().__format__("%m-%d")
-        os.rename(_log_dir + "/" + _log_name, "{}/debug-bak-{}.log".format(_log_dir, bak_time))
+        os.rename(_log_dir + "/" + _log_name, "{}/eskobe-{}.log".format(_log_dir, bak_time))
     except FileNotFoundError:
         pass
 
@@ -44,7 +44,7 @@ def log_enable():
 
     logging.config.dictConfig({"disable_existing_loggers": False, "version": 1})
     logging.root.handlers = [console_handler, file_handler]
-    logging.root.setLevel(logging.DEBUG)
+    logging.root.setLevel(LOGGING_LEVEL)
     logging.getLogger("requests").setLevel(LOGGING_LEVEL)
 
     return log

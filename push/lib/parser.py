@@ -31,26 +31,10 @@ class _BaseParser(metaclass=ABCMeta):
         return self._target_id
 
 
-class BasePushBody:
-    """PushCenter 推送实体"""
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @abstractmethod
-    def decorated(self):
-        """body封装"""
-        return ""
-
-    def __str__(self):
-        return str(self.decorated)
-
-    __repr__ = __str__
-
-
 class IOTResponseParser(_BaseParser):
     """云喇叭推送实体"""
-    def __init__(self, platform, response_time, response, target_id, *args, **kwargs):
-        super().__init__(platform=platform, response_time=response_time, target_id=target_id,  *args, **kwargs)
+    def __init__(self, response_time, response, target_id, *args, **kwargs):
+        super().__init__(platform=APPPush.PushPlatform.IOT, response_time=response_time, target_id=target_id,  *args, **kwargs)
         self.response = response
 
     @property
@@ -58,10 +42,3 @@ class IOTResponseParser(_BaseParser):
         if self.response.__contains__("result"):
             return True
         return False
-
-
-def new_response_parser(platform, response_time: int, response, target_id):
-    if platform == APPPush.PushCenter.IOT:
-        return IOTResponseParser(APPPush.PushCenter.IOT, response_time, response, target_id)
-    return None
-

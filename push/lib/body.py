@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from const import APPPush
+import random
 
 
 class _BasePushBody(metaclass=ABCMeta):
@@ -48,10 +49,3 @@ class IOTPushBody(_BasePushBody):
         return str(self.decorated)
 
     __repr__ = __str__
-
-
-def new_push_body(platform, app_id, app_key, temple_id, amount: int, target_id, priority: int = 1):
-    if platform == APPPush.PushCenter.IOT:
-        return IOTPushBody(platform=platform, app_id=app_id, app_key=app_key,
-                           temple_id=temple_id, amount=amount, target_id=target_id, priority=priority)
-    return None

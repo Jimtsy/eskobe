@@ -1,18 +1,10 @@
 import response
 import simplejson as json
 import random
-from push.lib.push_center import new_push_center
-from push.lib.body import new_push_body
 from const import APPPush
+from push.push_center import push_center
 
 __all__ = ["PushHandler"]
-
-
-def check_valid_push_center(platform):
-    push_center = new_push_center(platform=platform)
-    if not push_center:
-        return None
-    return push_center
 
 
 class PushHandler:
@@ -32,19 +24,12 @@ class PushHandler:
             if push_type not in APPPush.PushType.__all__:
                 return response.ParamsErr("invalid push_type, select from {}".format(APPPush.PushType.__all__))
 
-            api = request_kwargs.pop("api", "pushTemplateMessage")
             amount = request_kwargs.get("amount", random.randint(1, 100))
             priority = request_kwargs.get("priority", 1)
-            pc = check_valid_push_center(platform=platform)
-            if not pc:
-                return response.ParamsErr("cannot find push center, maybe you should select from {}".format(
-                    APPPush.PushCenter.__all__))
-
-            body = new_push_body(platform=platform, app_id=app_id, app_key=app_key, temple_id=temple_id,
-                                 amount=amount, target_id=target_id, priority=priority)
-            pc.start_push(push_type=push_type, api=api, body=body, **request_kwargs)
-            return response.Success("查看实时统计信息: http://106.14.30.88:3000/dashboard/db/shou-qian-ba-tui-song?"
-                                            "panelId=1&fullscreen&edit&from=now-5m&to=now&tab=metrics")
+            body = push_center.new_push_body(platform=platform, app_id=app_id, app_key=app_key, temple_id=temple_id,
+                                             amount=amount, target_id=target_id, priority=priority)
+            msg = push_center.push(platform, body)
+            return response.Success(msg)
         return response.NotFound("not supported")
 
     @staticmethod
@@ -52,14 +37,10 @@ class PushHandler:
         if req.method == "POST":
             request_kwargs = json.loads(str(req.body, encoding="utf-8"))
             platform = request_kwargs.pop("platform", None)
-            if not platform:
-                return response.ParamsErr("lack of params <platform>")
-            pc = check_valid_push_center(platform=platform)
-            if not pc:
-                return response.ParamsErr("cannot find push center, maybe you should select from {}".format(
-                    APPPush.PushCenter.__all__))
-
-            msg = pc.stop_all_thread()
+            target_id = request_kwargs.pop("target_id", None)
+            if not all([platform, target_id]):
+                return response.ParamsErr("lack of params")
+            msg = push_center.kill_push(platform, target_id)
             return response.Success(msg)
         return response.NotFound("not supported")
 
@@ -68,16 +49,21 @@ class PushHandler:
         if req.method == "POST":
             request_kwargs = json.loads(str(req.body, encoding="utf-8"))
             platform = request_kwargs.pop("platform", None)
-            if not platform:
-                return response.ParamsErr("lack of params <platform>")
-            pc = check_valid_push_center(platform)
-            if not pc:
-                return response.ParamsErr("cannot find push center, maybe you should select from {}".format(
-                    APPPush.PushCenter.__all__))
+            target_id = request_kwargs.pop("target_id", None)
+            if not all([platform, target_id]):
+                return response.ParamsErr("lack of params")
 
-            stats = pc.show_stats()
-            if stats:
-                return response.Success(stats)
-            else:
-                return response.Success("no data")
+            msg = push_center.show_stats(platform, target_id)
+            return response.Success(msg)
+        return response.NotFound("not supported")
+
+    @staticmethod
+    def show_hooks(req):
+        if req.method == "POST":
+            request_kwargs = json.loads(str(req.body, encoding="utf-8"))
+            platform = request_kwargs.pop("platform", None)
+            if not platform:
+                return response.ParamsErr("lack of params")
+            msg = push_center.show_hooks(platform)
+            return response.Success(msg)
         return response.NotFound("not supported")

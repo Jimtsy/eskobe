@@ -2,11 +2,13 @@ import threading
 import time
 import queue
 from log import logger
+from push.lib.hook import AbstractHook
 
 
-class StatsHook(threading.Thread):
-    def __init__(self, show_rhythm=3):
-        super().__init__(daemon=True)
+class StatsHook(AbstractHook):
+    def __init__(self, name, show_rhythm=3):
+        super().__init__(name)
+        self.name = "stats_" + name
         self.requests = 0
         self.failures = 0
         self.min = 0
@@ -15,10 +17,9 @@ class StatsHook(threading.Thread):
         self.queue = queue.Queue(maxsize=10000)
         self.total_response_time = 0
         self.show_rhythm = show_rhythm
-        self.__is_print = threading.Event()
-        self.__is_print.set()
-        self.get_timeout = 10
         self.lock = threading.Condition()
+        self.is_running = threading.Event()
+        self._destroy = False
 
     def reset(self):
         self.lock.acquire()
@@ -37,8 +38,8 @@ class StatsHook(threading.Thread):
         self.max = response_time if response_time > self.max else self.max
 
     def run(self):
+        super().run()
         logger.info("stats_hooks starting...")
-
         show_stats = threading.Thread(target=self.show_stats, daemon=False, args=(self.show_rhythm, ))
         show_stats.start()
 
@@ -46,17 +47,20 @@ class StatsHook(threading.Thread):
             try:
                 rp = self.queue.get(timeout=self.get_timeout)
             except queue.Empty:
-                if not self.__is_print.is_set():
+                logger.info("failed to fetchone from q.")
+                if self._destroy:
+                    logger.info("{} destroyed".format(self.name))
+                    break
+                if self.is_stop():
                     continue
                 else:
                     self.stop()
             else:
                 self.lock.acquire()
-                if not self.__is_print.is_set():
+                if self.is_stop():
                     self.resume()
                 self.requests += 1
 
-                print("stats:", rp.response_time, type(rp.response_time))
                 self.total_response_time += rp.response_time
                 self.update_min(rp.response_time)
                 self.update_max(rp.response_time)
@@ -68,11 +72,13 @@ class StatsHook(threading.Thread):
         """必须是线程安全的"""
         self.queue.put(model, block=False, timeout=2)
 
-    def show_stats(self, response_time):
+    def show_stats(self, show_rhythm):
         while True:
-            if self.__is_print.is_set():
+            if self._destroy:
+                break
+            if not self.is_stop():
                 logger.info(str(self.json_stats()))
-                time.sleep(response_time)
+                time.sleep(show_rhythm)
 
     def json_stats(self):
         return dict(
@@ -83,14 +89,6 @@ class StatsHook(threading.Thread):
             min=int(self.min),
             max=int(self.max)
         )
-
-    def stop(self):
-        logger.info("stop print")
-        self.__is_print.clear()
-
-    def resume(self):
-        logger.info("resume print")
-        self.__is_print.set()
 
     @property
     def current_stats(self):

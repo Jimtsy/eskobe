@@ -20,6 +20,6 @@ class APPPush:
         JRON_RPC_PUSH = "1"
         __all__ = [JRON_RPC_PUSH]
 
-    class PushCenter:
+    class PushPlatform:
         IOT = "IOT"
         __all__ = [IOT]
