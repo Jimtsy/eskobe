@@ -41,6 +41,7 @@ class StatsHook(AbstractHook):
         super().run()
         logger.info("stats_hooks starting...")
         show_stats = threading.Thread(target=self.show_stats, daemon=False, args=(self.show_rhythm, ))
+        show_stats.name = self.name
         show_stats.start()
 
         while True:

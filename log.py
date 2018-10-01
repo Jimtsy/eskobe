@@ -8,7 +8,7 @@ from logging.handlers import TimedRotatingFileHandler
 from pythonjsonlogger import jsonlogger
 
 _log_dir = os.environ.get('LOG_DIR', os.path.curdir)
-_log_name = os.environ.get("LOG_NAME", "eskobe.log")
+_log_name = os.environ.get("LOG_NAME", "easysite.log")
 _level = os.environ.get("LEVEL", logging.INFO)
 
 if _log_dir and os.path.isdir(_log_dir):
@@ -25,7 +25,7 @@ LOGGING_LEVEL = _level
 def log_enable():
     try:
         bak_time = datetime.now().__format__("%m-%d")
-        os.rename(_log_dir + "/" + _log_name, "{}/eskobe-{}.log".format(_log_dir, bak_time))
+        os.rename(_log_dir + "/" + _log_name, "{}/debug-bak-{}.log".format(_log_dir, bak_time))
     except FileNotFoundError:
         pass
 
@@ -44,7 +44,7 @@ def log_enable():
 
     logging.config.dictConfig({"disable_existing_loggers": False, "version": 1})
     logging.root.handlers = [console_handler, file_handler]
-    logging.root.setLevel(LOGGING_LEVEL)
+    logging.root.setLevel(logging.DEBUG)
     logging.getLogger("requests").setLevel(LOGGING_LEVEL)
 
     return log
