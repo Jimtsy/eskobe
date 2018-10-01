@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.conf.urls import url
-from .middle import request_middleware
+from .middleware import request_middleware
 
 
 urlpatterns = [
