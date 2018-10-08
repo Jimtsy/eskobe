@@ -6,7 +6,7 @@ from push.lib.hook import AbstractHook
 
 
 class StatsHook(AbstractHook):
-    def __init__(self, name, show_rhythm=3):
+    def __init__(self, name, show_rhythm=10):
         super().__init__(name)
         self.name = "stats_" + name
         self.requests = 0

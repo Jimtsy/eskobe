@@ -57,4 +57,5 @@ class PushCenter:
         if platform in self.push_platform:
             return self.push_platform[platform].show_hooks()
         return "has not found running {}, pushing platform is {}".format(platform, list(self.push_platform.keys()))
+
 push_center = PushCenter()
