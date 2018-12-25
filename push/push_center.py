@@ -19,7 +19,7 @@ class PushCenter:
     def _new_push_platform(self, platform):
         if platform == APPPush.PushPlatform.IOT:
             callback = lambda *args, **kwargs: IOTResponseParser(*args, **kwargs)
-            push_platform = MOTTPushPlatform(callback, "http://pushservice-core.test.shouqianba.com/rpc/push")
+            push_platform = MOTTPushPlatform(callback, "")
             self._collect(push_platform)
             return push_platform
         return None
@@ -31,7 +31,6 @@ class PushCenter:
         :param platform:
         :param args:
         :param kwargs:
-        :return:
         """
         if platform == APPPush.PushPlatform.IOT:
             return IOTPushBody(platform=platform, app_id=app_id, app_key=app_key, amount=amount, target_id=target_id, **kwargs)
